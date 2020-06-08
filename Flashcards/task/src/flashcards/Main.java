@@ -7,6 +7,32 @@ package flashcards;
 
 public class Main {
     public static void main(String[] args) throws FileNotFoundException {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         Random random = new Random();
 
         Scanner scanner = new Scanner(System.in);
@@ -16,6 +42,84 @@ public class Main {
         //System.out.println("its printing");
         boolean cardflag = false;
         boolean defFlag = false;
+
+
+        //here is code for command line arguments
+
+        if(args.length>1){
+            for (int i =0; i < args.length;i = i+2){
+                if(args[i].equals("-import")){
+                    //System.out.println("File name:");
+                    String readFile = args[i+1];
+                    File fileRead = new File(readFile);
+                    boolean fileExist = true;
+                    int counter = 0;
+                    try (Scanner reader = new Scanner(fileRead)) {
+                        while (reader.hasNext()) {
+                            String indicater = reader.nextLine();
+                            if(indicater.equals("break")){
+                                break;
+                            }
+                            String key = reader.nextLine();
+                            String value = reader.nextLine();
+                            if(mapOfCards.containsKey(key)) {
+                                mapOfCards.replace(key, value);
+                            }
+                            else {
+                                mapOfCards.put(key,value);
+                            }
+                            if (mapOfErrors.containsKey(key)){
+
+                            }
+                            else {
+                                mapOfErrors.put(key, 0);
+                            }
+                            counter = counter + 1;
+                        }
+                        while (reader.hasNext()){
+                            String errorKey = reader.nextLine();
+                            String errorValue = reader.nextLine();
+                            if(mapOfErrors.containsKey(errorKey)){
+                                mapOfErrors.replace(errorKey,Integer.parseInt(errorValue));
+                            }
+                            else {
+                                mapOfErrors.put(errorKey,Integer.parseInt(errorValue));
+                            }
+                        }
+                    } catch (FileNotFoundException e) {
+                        System.out.println("not found");
+                        fileExist = false;
+
+                    }
+                    if(fileExist) {
+                        System.out.println(counter + " cards have been loaded.");
+                    }
+                    //here code for import ends
+
+                }
+
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         while (exit){
             cardflag = false;
             defFlag = false;
@@ -188,6 +292,37 @@ public class Main {
                 case "exit":
                     exit = false;
                     System.out.println("Bye bye!");
+                    if(args.length>1){
+                        for (int i =0; i < args.length;i = i+2) {
+                            if (args[i].equals("-export")) {
+                               // System.out.println("File name:");
+                                String exportFileName = args[i+1];
+                                File exportFile = new File(exportFileName);
+                                int counter3 = 0;
+                                try (PrintWriter printWriter = new PrintWriter(exportFile)) {
+                                    for(var entry: mapOfCards.entrySet()){
+                                        printWriter.println(counter3);
+                                        printWriter.println(entry.getKey());
+                                        printWriter.println(entry.getValue());
+                                        counter3 = counter3 + 1;
+                                    }
+                                    printWriter.println("break");
+
+                                    for(var entry:mapOfErrors.entrySet()){
+                                        printWriter.println(entry.getKey());
+                                        printWriter.println(entry.getValue());
+                                    }
+
+                                } catch (
+                                        IOException e) {
+                                    System.out.printf("An exception occurs %s", e.getMessage());
+                                }
+                                System.out.println(counter3 +" cards have been saved.");
+
+
+                            }
+                        }
+                            }
                     break;
 
 
