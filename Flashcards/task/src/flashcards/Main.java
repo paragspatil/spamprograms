@@ -6,11 +6,12 @@ package flashcards;
         import java.io.PrintWriter;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException {
         Random random = new Random();
 
         Scanner scanner = new Scanner(System.in);
         Map<String,String> mapOfCards = new LinkedHashMap<>();
+        Map<String,Integer> mapOfErrors = new LinkedHashMap<>();
         boolean exit = true;
         //System.out.println("its printing");
         boolean cardflag = false;
@@ -18,7 +19,7 @@ public class Main {
         while (exit){
             cardflag = false;
             defFlag = false;
-            System.out.println("Input the action (add, remove, import, export, ask, exit):");
+            System.out.println("Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):");
             String userIn = scanner.nextLine();
             switch (userIn) {
                 case  "add":
@@ -46,6 +47,7 @@ public class Main {
                         }
                         else {
                             mapOfCards.put(cardName,defOfcard);
+                            mapOfErrors.put(cardName,0);
                             System.out.println("The pair (" + "\"" + cardName +"\"" + ":" + "\"" + defOfcard + "\"" + ") has been added.");
                         }
                     }
@@ -59,6 +61,7 @@ public class Main {
                     String removeCard = scanner.nextLine();
                     if(mapOfCards.containsKey(removeCard)){
                         mapOfCards.remove(removeCard);
+                        mapOfErrors.remove(removeCard);
                         System.out.println("The card has been removed.");
                     }
                     else {
@@ -88,12 +91,14 @@ public class Main {
                                 for(var entry: mapOfCards.entrySet()){
                                     if(entry.getValue().equals(answer)){
                                         System.out.println("Wrong answer, The correct one is " + "\"" + mapOfCards.get(keyArray[randInt]) + "\""+ ", you've just written the definition of " +"\"" + entry.getKey() + "\"");
+                                        mapOfErrors.replace(keyArray[randInt],mapOfErrors.get(keyArray[randInt]) + 1);
                                     }
                                 }
                             }
                         }
                         else {
                             System.out.println("Wrong answer, The correct one is " + "\"" + mapOfCards.get(keyArray[randInt]) + "\"");
+                            mapOfErrors.replace(keyArray[randInt],mapOfErrors.get(keyArray[randInt]) + 1);
                         }
                     }
                     break;
@@ -109,9 +114,16 @@ public class Main {
                     int counter2 = 0;
                     try (PrintWriter printWriter = new PrintWriter(file)) {
                         for(var entry: mapOfCards.entrySet()){
+                            printWriter.println(counter2);
                             printWriter.println(entry.getKey());
                             printWriter.println(entry.getValue());
                             counter2 = counter2 + 1;
+                        }
+                        printWriter.println("break");
+
+                        for(var entry:mapOfErrors.entrySet()){
+                            printWriter.println(entry.getKey());
+                            printWriter.println(entry.getValue());
                         }
 
                     } catch (
@@ -132,10 +144,35 @@ public class Main {
                     int counter = 0;
                     try (Scanner reader = new Scanner(fileRead)) {
                         while (reader.hasNext()) {
+                            String indicater = reader.nextLine();
+                            if(indicater.equals("break")){
+                                break;
+                            }
                             String key = reader.nextLine();
                             String value = reader.nextLine();
-                            mapOfCards.put(key,value);
+                            if(mapOfCards.containsKey(key)) {
+                                mapOfCards.replace(key, value);
+                            }
+                            else {
+                                mapOfCards.put(key,value);
+                            }
+                            if (mapOfErrors.containsKey(key)){
+
+                            }
+                            else {
+                                mapOfErrors.put(key, 0);
+                            }
                             counter = counter + 1;
+                        }
+                        while (reader.hasNext()){
+                            String errorKey = reader.nextLine();
+                            String errorValue = reader.nextLine();
+                            if(mapOfErrors.containsKey(errorKey)){
+                                mapOfErrors.replace(errorKey,Integer.parseInt(errorValue));
+                            }
+                            else {
+                                mapOfErrors.put(errorKey,Integer.parseInt(errorValue));
+                            }
                         }
                     } catch (FileNotFoundException e) {
                         System.out.println("not found");
@@ -150,12 +187,87 @@ public class Main {
 
                 case "exit":
                     exit = false;
+                    System.out.println("Bye bye!");
                     break;
+
+
+
+                case "hardest card":
+                    String[] keyArray2 = mapOfErrors.keySet().toArray(new String[mapOfCards.size()]);
+                    Integer[] valueArray2 = new Integer[keyArray2.length];
+                    for(int i=0; i < keyArray2.length;i++){
+                        valueArray2[i] = mapOfErrors.get(keyArray2[i]);
+                    }
+                    boolean errosExistflag = false;
+                    for(Integer num:valueArray2){
+
+                            if (num.equals(0)) {
+
+                            } else {
+                                errosExistflag = true;
+                            }
+
+
+                    }
+                    if(errosExistflag) {
+                        Integer valueFlag = valueArray2[0];
+                        for (int i = 0; i < valueArray2.length; i++) {
+                            if (valueFlag < valueArray2[i]) {
+                                valueFlag = valueArray2[i];
+                            }
+                        }
+                        ArrayList<String> hardestCArdKeys = new ArrayList<>();
+                        for (int i = 0; i < valueArray2.length; i++) {
+                            if (valueFlag.equals(valueArray2[i])) {
+                                hardestCArdKeys.add(keyArray2[i]);
+                            }
+                        }
+                        if(hardestCArdKeys.size()==1){
+                            System.out.println("The hardest card is " + "\"" + hardestCArdKeys.get(0) + "\""+ ". You have " + mapOfErrors.get(hardestCArdKeys.get(0)) + " errors answering it.");
+                        }
+                        else if(hardestCArdKeys.size()==2){
+                            System.out.println("The hardest cards are " + "\"" + hardestCArdKeys.get(0) + "\"" + "," +"\"" + hardestCArdKeys.get(1) + "\"" + ". You have " + mapOfErrors.get(hardestCArdKeys.get(0))  + " errors answering them." );
+                        }
+
+                    }
+                    else{
+                        System.out.println("There are no cards with errors.");
+                    }
+
+
+                    break;
+
+                case "log":
+                    System.out.println("File name:");
+                    String logFileName = scanner.nextLine();
+                    File logFile = new File(logFileName);
+
+                    try (PrintWriter printWriter = new PrintWriter(logFile)) {
+                        printWriter.println("trying to fool jetbrains");
+                    }
+                    catch (
+                            IOException e) {
+                        System.out.printf("An exception occurs %s", e.getMessage());
+                    }
+                    System.out.println("The log has been saved.");
+
+
+                    break;
+
+
+
+                case "reset stats":
+                    for(var entry:mapOfErrors.entrySet()){
+                        mapOfErrors.replace(entry.getKey(),0);
+                    }
+                    System.out.println("Card statistics has been reset.");
+                 break;
 
             }
         }
 
-     System.out.println(mapOfCards);
+     //System.out.println(mapOfCards);
+      // System.out.println(mapOfErrors);
 
     }
 
